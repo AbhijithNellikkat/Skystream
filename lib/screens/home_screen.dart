@@ -40,7 +40,8 @@ class HomeScreen extends StatelessWidget {
                   height: 300,
                   width: 600,
                   decoration: const BoxDecoration(
-                      color: Color.fromARGB(255, 154, 23, 17)),
+                    color: Color.fromARGB(255, 21, 13, 4),
+                  ),
                 ),
               ),
               BackdropFilter(
