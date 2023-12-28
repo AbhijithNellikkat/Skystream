@@ -6,6 +6,8 @@ import 'package:equatable/equatable.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:weather/weather.dart';
 
+import '../data/weather_data.dart';
+
 part 'weather_event.dart';
 part 'weather_state.dart';
 
@@ -18,7 +20,7 @@ class WeatherBloc extends Bloc<WeatherEvent, WeatherState> {
       FetchWeather event, Emitter<WeatherState> emit) async {
     emit(WeatherLoading());
     try {
-      const String apiKey = '6a03d86dffb7ce9f6398691ee68698cd';
+      
       WeatherFactory weatherFactory =
           WeatherFactory(apiKey, language: Language.ENGLISH);
 
@@ -29,7 +31,7 @@ class WeatherBloc extends Bloc<WeatherEvent, WeatherState> {
 
       log('$weather');
 
-      emit(WeatherSuccess(weather: weather));
+      emit(WeatherSuccess(weather: weather, position: event.position));
     } catch (e) {
       emit(WeatherFailure());
       log('$e');
