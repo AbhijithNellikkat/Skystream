@@ -1,8 +1,12 @@
+// ignore_for_file: use_build_context_synchronously
+
+import 'dart:developer';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:skystream/bloc/weather_bloc.dart';
@@ -15,6 +19,18 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  Future<void> refreshData() async {
+    try {
+      Position currentPosition = await Geolocator.getCurrentPosition();
+
+      BlocProvider.of<WeatherBloc>(context).add(
+        FetchWeather(position: currentPosition),
+      );
+    } catch (e) {
+      log('Error: $e');
+    }
+  }
+
   Widget getWeatherIcon(int code) {
     switch (code) {
       case >= 200 && < 300:
@@ -48,18 +64,14 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       backgroundColor: Colors.black,
       extendBodyBehindAppBar: true,
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(40, 1.2 * kToolbarHeight, 40, 20),
-        child: BlocConsumer(
-          builder: (context, state) {
-            if (state is WeatherSuccess) {
-              return RefreshIndicator(
-                onRefresh: () async {
-                  context
-                      .read<WeatherBloc>()
-                      .add(FetchWeather(position: state.position));
-                },
-                child: SizedBox(
+      body: RefreshIndicator(
+        onRefresh: refreshData,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(40, 1.2 * kToolbarHeight, 40, 20),
+          child: BlocBuilder<WeatherBloc, WeatherState>(
+            builder: (context, state) {
+              if (state is WeatherSuccess) {
+                return SizedBox(
                   height: MediaQuery.of(context).size.height,
                   child: Stack(
                     children: [
@@ -70,7 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           width: 300,
                           decoration: const BoxDecoration(
                             shape: BoxShape.rectangle,
-                            color: Color.fromARGB(255, 79, 141, 255),
+                            color: Color.fromARGB(255, 141, 181, 255),
                           ),
                         ),
                       ),
@@ -91,214 +103,218 @@ class _HomeScreenState extends State<HomeScreen> {
                               const BoxDecoration(color: Colors.transparent),
                         ),
                       ),
-                      SizedBox(
-                        height: MediaQuery.of(context).size.height,
-                        width: MediaQuery.of(context).size.width,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '📍 ${state.weather.areaName}',
-                              style: GoogleFonts.poppins(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w300),
-                            ),
-                            const SizedBox(height: 9),
-                            Text(
-                              'SkyStream 👋',
-                              style: GoogleFonts.poppins(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 25,
-                              ),
-                            ),
-                            getWeatherIcon(state.weather.weatherConditionCode!),
-                            Center(
-                              child: Text(
-                                '${state.weather.temperature!.celsius!.round()}°C',
+                      SingleChildScrollView(
+                        child: SizedBox(
+                          height: MediaQuery.of(context).size.height,
+                          width: MediaQuery.of(context).size.width,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '📍 ${state.weather.areaName}',
                                 style: GoogleFonts.poppins(
                                     color: Colors.white,
-                                    fontSize: 55,
-                                    fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                            Center(
-                              child: Text(
-                                state.weather.weatherMain!,
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Center(
-                              child: Text(
-                                DateFormat('EEEE dd •')
-                                    .add_jm()
-                                    .format(state.weather.date!),
-                                style: GoogleFonts.poppins(
-                                    color: Colors.white,
-                                    fontSize: 15,
                                     fontWeight: FontWeight.w300),
                               ),
-                            ),
-                            const SizedBox(height: 30),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    Image.asset(
-                                      'assets/images/11.png',
-                                      scale: 8,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Sunrise',
-                                          style: GoogleFonts.poppins(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w300,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          DateFormat()
-                                              .add_jm()
-                                              .format(state.weather.sunrise!),
-                                          style: GoogleFonts.poppins(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                              const SizedBox(height: 9),
+                              Text(
+                                'SkyStream 👋',
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 25,
                                 ),
-                                Row(
-                                  children: [
-                                    Image.asset(
-                                      'assets/images/12.png',
-                                      scale: 8,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Sunset',
-                                          style: GoogleFonts.poppins(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w300,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          DateFormat()
-                                              .add_jm()
-                                              .format(state.weather.sunset!),
-                                          style: GoogleFonts.poppins(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 5.0),
-                              child: Divider(
-                                color: Colors.grey,
                               ),
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    Image.asset(
-                                      'assets/images/13.png',
-                                      scale: 8,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Temp Max',
-                                          style: GoogleFonts.poppins(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w300,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          "${state.weather.tempMax!.celsius!.round()} °C",
-                                          style: GoogleFonts.poppins(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                              getWeatherIcon(
+                                  state.weather.weatherConditionCode!),
+                              Center(
+                                child: Text(
+                                  '${state.weather.temperature!.celsius!.round()}°C',
+                                  style: GoogleFonts.poppins(
+                                      color: Colors.white,
+                                      fontSize: 55,
+                                      fontWeight: FontWeight.w600),
                                 ),
-                                Row(
-                                  children: [
-                                    Image.asset(
-                                      'assets/images/14.png',
-                                      scale: 8,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Temp Min',
-                                          style: GoogleFonts.poppins(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w300,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          "${state.weather.tempMin!.celsius!.round()} °C",
-                                          style: GoogleFonts.poppins(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                              ),
+                              Center(
+                                child: Text(
+                                  state.weather.weatherMain!,
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
-                              ],
-                            ),
-                          ],
+                              ),
+                              const SizedBox(height: 8),
+                              Center(
+                                child: Text(
+                                  DateFormat('EEEE dd •')
+                                      .add_jm()
+                                      .format(state.weather.date!),
+                                  style: GoogleFonts.poppins(
+                                      color: Colors.white,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w300),
+                                ),
+                              ),
+                              const SizedBox(height: 30),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Image.asset(
+                                        'assets/images/11.png',
+                                        scale: 8,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Sunrise',
+                                            style: GoogleFonts.poppins(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w300,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            DateFormat()
+                                                .add_jm()
+                                                .format(state.weather.sunrise!),
+                                            style: GoogleFonts.poppins(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    children: [
+                                      Image.asset(
+                                        'assets/images/12.png',
+                                        scale: 8,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Sunset',
+                                            style: GoogleFonts.poppins(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w300,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            DateFormat()
+                                                .add_jm()
+                                                .format(state.weather.sunset!),
+                                            style: GoogleFonts.poppins(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 5.0),
+                                child: Divider(
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Image.asset(
+                                        'assets/images/13.png',
+                                        scale: 8,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Temp Max',
+                                            style: GoogleFonts.poppins(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w300,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            "${state.weather.tempMax!.celsius!.round()} °C",
+                                            style: GoogleFonts.poppins(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    children: [
+                                      Image.asset(
+                                        'assets/images/14.png',
+                                        scale: 8,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Temp Min',
+                                            style: GoogleFonts.poppins(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w300,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            "${state.weather.tempMin!.celsius!.round()} °C",
+                                            style: GoogleFonts.poppins(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
                   ),
-                ),
-              );
-            } else {
-              return const SizedBox();
-            }
-          },
-          listener: (context, state) {},
+                );
+              } else {
+                return const SizedBox();
+              }
+            },
+          ),
         ),
       ),
     );
